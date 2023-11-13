@@ -1,4 +1,3 @@
-// Package.jsx
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -15,6 +14,7 @@ function Package() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [packagesPerPage] = useState(10);
+    const [isTableView, setIsTableView] = useState(true);
 
     const apiUrl = "http://localhost:5000/paquetes";
 
@@ -44,7 +44,6 @@ function Package() {
 
     const handleDelete = async (id) => {
         try {
-            // Muestra una alerta de confirmación antes de eliminar
             const result = await Swal.fire({
                 title: "¿Estás seguro?",
                 text: "¡No podrás revertir esto!",
@@ -56,7 +55,6 @@ function Package() {
             });
 
             if (result.isConfirmed) {
-                // Si el usuario confirma, procede con la eliminación
                 await axios.delete(`http://localhost:5000/paquetes/${id}`);
                 fetchPaquetes();
                 Swal.fire("Eliminado", "El paquete ha sido eliminado.", "success");
@@ -70,100 +68,129 @@ function Package() {
         const selected = paquetes.find((paquete) => paquete.id === id);
         setSelectedPackage(selected);
         setIsEditModalOpen(true);
-      };
+    };
 
-      const handleSaveEdit = async (editedPackage) => {
+    const handleSaveEdit = async (editedPackage) => {
         try {
-          await axios.put(`${apiUrl}/${editedPackage.get("id")}`, editedPackage, {
-            headers: {
-              "Content-Type": "multipart/form-data", // Asegúrate de establecer el tipo de contenido correcto
-            },
-          });
-          fetchPaquetes();
+            await axios.put(`${apiUrl}/${editedPackage.get("id")}`, editedPackage, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            fetchPaquetes();
         } catch (error) {
-          console.error("Error al editar el paquete:", error);
+            console.error("Error al editar el paquete:", error);
         }
-      };
+    };
 
     const handleCloseEdit = () => {
         setIsEditModalOpen(false);
     };
 
-    // Calcular índices de la primera y última página
+    const switchView = () => {
+        setIsTableView((prevIsTableView) => !prevIsTableView);
+    };
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     const indexOfLastPackage = currentPage * packagesPerPage;
     const indexOfFirstPackage = indexOfLastPackage - packagesPerPage;
     const currentPackages = paquetes.slice(indexOfFirstPackage, indexOfLastPackage);
 
-    // Cambiar de página
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
     return (
         <>
-            <div className="package-container">
+            <div className={`package-container ${isTableView ? "table-view" : "card-view"}`}>
                 <div className="container">
-                    
                     <div className="content-info">
                         <div className="content-top">
                             <div className="options-left">
                                 <CreateButton fetchPaquetes={fetchPaquetes} />
                             </div>
                             <div className="options-right">
-                                <div className="option-list">
-                                    <i className='bx bx-menu'></i>
+                                <div className="option-list" onClick={switchView}>
+                                    <i className="bx bx-menu"></i>
                                 </div>
-                                <div className="option-card">
-                                    <i className='bx bx-category' ></i>
+                                <div className="option-card" onClick={switchView}>
+                                    <i className="bx bx-category"></i>
                                 </div>
                             </div>
                         </div>
-                        <div className="content-body">
-                            <table className="fixed-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Imagen</th>
-                                        <th>Nombre</th>
-                                        <th>Descripción</th>
-                                        <th>Duración</th>
-                                        <th>Estado</th>
-                                        <th>Precio</th>
-                                        <th>Opciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {currentPackages.map((paquete) => (
-                                        <tr key={paquete.id}>
-                                            <td>{paquete.id}</td>
-                                            <td><img src={paquete.urlImagen} alt={paquete.nombre_paquete} /></td>
-                                            <td>{paquete.nombre_paquete}</td>
-                                            <td>{paquete.descripcion}</td>
-                                            <td>{paquete.duracion} minutos</td>
-                                            <td>{paquete.estado ? 'Activo' : 'Inactivo'}</td>
-                                            <td>${paquete.precio}</td>
-                                            <td>
-                                                <PackageActions
-                                                    onView={() => handleView(paquete.id)}
-                                                    onEdit={() => handleEdit(paquete.id)}
-                                                    onDelete={() => handleDelete(paquete.id)}
-                                                />
-                                            </td>
+
+                        {isTableView ? (
+                            <div className="content-body">
+                                <table className="fixed-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Imagen</th>
+                                            <th>Nombre</th>
+                                            <th>Descripción</th>
+                                            <th>Duración</th>
+                                            <th>Estado</th>
+                                            <th>Precio</th>
+                                            <th>Opciones</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="content-button">
-                            {/* Paginación */}
-                            <ul className="pagination">
-                                {Array.from({ length: Math.ceil(paquetes.length / packagesPerPage) }, (_, i) => (
-                                    <li key={i + 1} className={currentPage === i + 1 ? 'active' : ''}>
-                                        <a onClick={() => paginate(i + 1)} href="#!">{i + 1}</a>
-                                    </li>
+                                    </thead>
+                                    <tbody>
+                                        {currentPackages.map((paquete) => (
+                                            <tr key={paquete.id}>
+                                                <td>{paquete.id}</td>
+                                                <td>
+                                                    <img src={paquete.urlImagen} alt={paquete.nombre_paquete} />
+                                                </td>
+                                                <td>{paquete.nombre_paquete}</td>
+                                                <td>{paquete.descripcion}</td>
+                                                <td>{paquete.duracion} minutos</td>
+                                                <td>{paquete.estado ? "Activo" : "Inactivo"}</td>
+                                                <td>${paquete.precio}</td>
+                                                <td>
+                                                    <PackageActions
+                                                        onView={() => handleView(paquete.id)}
+                                                        onEdit={() => handleEdit(paquete.id)}
+                                                        onDelete={() => handleDelete(paquete.id)}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="content-body card-view-body">
+                                {currentPackages.map((paquete) => (
+                                    <div key={paquete.id} className="card">
+                                        <img src={paquete.urlImagen} alt={paquete.nombre_paquete} />
+                                        <div className="card-content">
+                                            <h3>Nombre: {paquete.nombre_paquete}</h3>
+                                            <p>Descripción: {paquete.descripcion}</p>
+                                            <p>Duración: {paquete.duracion} minutos</p>
+                                            <p>Estado: {paquete.estado ? "Activo" : "Inactivo"}</p>
+                                            <p>Precio: ${paquete.precio}</p>
+                                            <p>ID: {paquete.id}</p>
+                                        </div>
+                                        <PackageActions
+                                            onView={() => handleView(paquete.id)}
+                                            onEdit={() => handleEdit(paquete.id)}
+                                            onDelete={() => handleDelete(paquete.id)}
+                                        />
+                                    </div>
                                 ))}
-                            </ul>
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
+            </div>
+
+            <div className="content-button">
+                <ul className="pagination">
+                    {Array.from({ length: Math.ceil(paquetes.length / packagesPerPage) }, (_, i) => (
+                        <li key={i + 1} className={currentPage === i + 1 ? "active" : ""}>
+                            <a onClick={() => paginate(i + 1)} href="#!">
+                                {i + 1}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
             </div>
 
             {isModalOpen && (
@@ -173,24 +200,16 @@ function Package() {
                     <p>Nombre: {selectedPackage.nombre_paquete}</p>
                     <p>Descripción: {selectedPackage.descripcion}</p>
                     <p>Duración: {selectedPackage.duracion} minutos</p>
-                    <p>Estado: {selectedPackage.estado ? 'Activo' : 'Inactivo'}</p>
+                    <p>Estado: {selectedPackage.estado ? "Activo" : "Inactivo"}</p>
                     <p>Precio: ${selectedPackage.precio}</p>
-                    {/* Mostrar la imagen dentro del modal */}
                     <img src={selectedPackage.urlImagen} alt={selectedPackage.nombre_paquete} />
-                    {/* Agrega más detalles según sea necesario */}
                 </Modal>
             )}
 
-            {/* Verifica si el modal de edición está abierto */}
             {isEditModalOpen && (
-                <EditModal
-                    packageDetails={selectedPackage}
-                    onSave={handleSaveEdit}
-                    onClose={handleCloseEdit}
-                />
+                <EditModal packageDetails={selectedPackage} onSave={handleSaveEdit} onClose={handleCloseEdit} />
             )}
         </>
     );
 }
-
 export default Package;
