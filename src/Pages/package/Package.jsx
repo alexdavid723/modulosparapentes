@@ -101,9 +101,7 @@ function Package() {
         <>
             <div className="package-container">
                 <div className="container">
-                    <div className="header-info">
-
-                    </div>
+                    
                     <div className="content-info">
                         <div className="content-top">
                             <div className="options-left">
